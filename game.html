@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>One More Dot</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --panel:rgba(255,255,255,.06);
+    --panel2:rgba(255,255,255,.10);
+    --text:#eaf0ff;
+    --muted:rgba(234,240,255,.65);
+    --good:#38d39f;
+    --bad:#ff4d6d;
+    --accent:#7aa7ff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    background: radial-gradient(1200px 700px at 20% 10%, rgba(122,167,255,.22), transparent 55%),
+                radial-gradient(900px 600px at 80% 30%, rgba(56,211,159,.18), transparent 55%),
+                radial-gradient(900px 700px at 30% 85%, rgba(255,77,109,.10), transparent 60%),
+                var(--bg);
+    color:var(--text);
+    overflow:hidden;
+    touch-action: manipulation;
+  }
+  .wrap{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    padding:18px;
+  }
+  .card{
+    width:min(980px,100%);
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap:14px;
+  }
+  @media (max-width:860px){
+    .card{grid-template-columns:1fr; grid-template-rows:auto 1fr}
+  }
+
+  .hud{
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    padding:14px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 80px rgba(0,0,0,.35);
+  }
+  .title{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; margin-bottom:10px;
+  }
+  .title h1{
+    font-size:16px; letter-spacing:.3px; margin:0;
+    display:flex; align-items:center; gap:10px;
+  }
+  .badge{
+    font-size:12px;
+    padding:4px 9px;
+    border-radius:999px;
+    background:linear-gradient(90deg, rgba(122,167,255,.25), rgba(56,211,159,.20));
+    border:1px solid rgba(255,255,255,.12);
+    color:var(--text);
+  }
+  .statgrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:10px 0 12px;
+  }
+  .stat{
+    border-radius:14px;
+    background:var(--panel2);
+    border:1px solid rgba(255,255,255,.10);
+    padding:10px;
+  }
+  .stat .label{font-size:11px; color:var(--muted)}
+  .stat .value{font-size:20px; margin-top:4px; font-weight:700}
+  .small{font-size:12px; color:var(--muted); line-height:1.35}
+
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+  button{
+    appearance:none; border:none; outline:none;
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.12);
+    color:var(--text);
+    cursor:pointer;
+    font-weight:600;
+    transition: transform .06s ease, background .15s ease;
+  }
+  button:hover{background:rgba(255,255,255,.14)}
+  button:active{transform: translateY(1px) scale(.99)}
+  .primary{
+    background:linear-gradient(90deg, rgba(122,167,255,.35), rgba(56,211,159,.25));
+    border:1px solid rgba(255,255,255,.18);
+  }
+  .danger{
+    background:rgba(255,77,109,.18);
+    border:1px solid rgba(255,77,109,.25);
+  }
+  .toggle.on{box-shadow: inset 0 0 0 999px rgba(56,211,159,.10)}
+  .toggle.off{box-shadow: inset 0 0 0 999px rgba(255,77,109,.07)}
+
+  .stage{
+    position:relative;
+    background:rgba(0,0,0,.22);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    overflow:hidden;
+    min-height:520px;
+    height:min(68vh,720px);
+    box-shadow: 0 20px 80px rgba(0,0,0,.35);
+  }
+  .canvas{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    display:block;
+  }
+  .overlay{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    padding:18px;
+    pointer-events:none;
+  }
+  .panel{
+    width:min(520px, 100%);
+    background:rgba(10,14,28,.55);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:18px;
+    padding:16px;
+    backdrop-filter: blur(10px);
+    pointer-events:auto;
+  }
+  .panel h2{margin:0 0 8px; font-size:18px}
+  .panel p{margin:0; color:var(--muted); font-size:13px; line-height:1.45}
+  .panel .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+  .keyhint{
+    display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;
+    color:var(--muted); font-size:12px;
+  }
+  kbd{
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:11px;
+    padding:3px 7px;
+    border-radius:8px;
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.12);
+    color:var(--text);
+  }
+  .toast{
+    position:absolute;
+    left:50%; top:16px;
+    transform:translateX(-50%);
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(10,14,28,.60);
+    border:1px solid rgba(255,255,255,.14);
+    color:var(--text);
+    font-size:12px;
+    backdrop-filter: blur(10px);
+    opacity:0;
+    transition: opacity .2s ease, transform .2s ease;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .corner{
+    position:absolute; right:12px; bottom:12px;
+    font-size:12px; color:var(--muted);
+    background:rgba(0,0,0,.18);
+    border:1px solid rgba(255,255,255,.10);
+    padding:8px 10px;
+    border-radius:12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hud">
+      <div class="title">
+        <h1>One More Dot <span class="badge">tap / click</span></h1>
+        <span class="badge" id="modeBadge">Classic</span>
+      </div>
+
+      <div class="statgrid">
+        <div class="stat">
+          <div class="label">Score</div>
+          <div class="value" id="score">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Best</div>
+          <div class="value" id="best">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Combo</div>
+          <div class="value" id="combo">x1</div>
+        </div>
+        <div class="stat">
+          <div class="label">Streak</div>
+          <div class="value" id="streak">0</div>
+        </div>
+      </div>
+
+      <div class="small" id="tip">
+        Hit the dot before it escapes. Misses end the run. The dot gets smaller & faster.
+      </div>
+
+      <div class="btnrow">
+        <button class="primary" id="startBtn">Start</button>
+        <button id="pauseBtn" disabled>Pause</button>
+        <button id="resetBtn" class="danger">Reset</button>
+        <button id="soundBtn" class="toggle on" title="Toggle sound">Sound: On</button>
+        <button id="modeBtn" title="Toggle mode">Mode: Classic</button>
+      </div>
+
+      <div class="keyhint">
+        <span><kbd>Space</kbd> pause</span>
+        <span><kbd>R</kbd> restart</span>
+        <span><kbd>M</kbd> mode</span>
+      </div>
+    </div>
+
+    <div class="stage" id="stage">
+      <canvas class="canvas" id="c"></canvas>
+
+      <div class="toast" id="toast">Nice!</div>
+
+      <div class="overlay" id="overlay">
+        <div class="panel" id="panel">
+          <h2>Click the dot. Keep the streak.</h2>
+          <p>
+            Each hit boosts speed and shrinks the target. Chain hits quickly to build combo.
+            One miss ends the run — try to beat your best.
+          </p>
+          <div class="row">
+            <button class="primary" id="overlayStart">Start</button>
+            <button id="overlayHow">How it works</button>
+          </div>
+          <p class="small" style="margin-top:10px" id="howText" hidden>
+            <b>Classic:</b> one miss ends the run.<br>
+            <b>Zen:</b> misses don’t end, but score multiplier is lower — practice mode.
+          </p>
+        </div>
+      </div>
+
+      <div class="corner" id="cornerInfo">Ready</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ===== Helpers =====
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const lerp = (a,b,t)=>a+(b-a)*t;
+  const now = ()=>performance.now();
+
+  // ===== Elements =====
+  const canvas = document.getElementById("c");
+  const stage  = document.getElementById("stage");
+  const ctx = canvas.getContext("2d");
+
+  const scoreEl  = document.getElementById("score");
+  const bestEl   = document.getElementById("best");
+  const comboEl  = document.getElementById("combo");
+  const streakEl = document.getElementById("streak");
+
+  const startBtn = document.getElementById("startBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const soundBtn = document.getElementById("soundBtn");
+  const modeBtn  = document.getElementById("modeBtn");
+  const modeBadge= document.getElementById("modeBadge");
+
+  const overlay  = document.getElementById("overlay");
+  const overlayStart = document.getElementById("overlayStart");
+  const overlayHow = document.getElementById("overlayHow");
+  const howText  = document.getElementById("howText");
+  const toast    = document.getElementById("toast");
+  const cornerInfo = document.getElementById("cornerInfo");
+  const tipEl    = document.getElementById("tip");
+
+  // ===== Audio (tiny synth) =====
+  let audioCtx = null;
+  let soundOn = true;
+  function beep(freq=520, dur=0.06, type="sine", gain=0.045){
+    if(!soundOn) return;
+    try{
+      audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+      const t0 = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.value = gain;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start(t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.stop(t0 + dur);
+    }catch(e){}
+  }
+
+  // ===== Game State =====
+  const LS_KEY = "one_more_dot_best_v1";
+  let best = Number(localStorage.getItem(LS_KEY) || 0);
+
+  let W=0,H=0, dpr=1;
+  function resize(){
+    const rect = stage.getBoundingClientRect();
+    dpr = Math.max(1, Math.min(2.25, window.devicePixelRatio || 1));
+    W = Math.floor(rect.width);
+    H = Math.floor(rect.height);
+    canvas.width  = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener("resize", resize, {passive:true});
+  resize();
+
+  const Mode = { CLASSIC:"Classic", ZEN:"Zen" };
+  let mode = Mode.CLASSIC;
+
+  let running = false;
+  let paused = false;
+  let gameOver = false;
+
+  let score = 0;
+  let streak = 0;
+  let combo = 1;
+  let lastHitTime = -Infinity;
+
+  // Dot properties (animated)
+  let dot = {
+    x: W*0.5, y: H*0.5,
+    r: 30,
+    vx: 120, vy: 80,
+    baseSpeed: 160
+  };
+
+  // Particles for satisfying feedback
+  const parts = [];
+  function spawnParticles(x,y, n=18){
+    for(let i=0;i<n;i++){
+      const a = Math.random()*Math.PI*2;
+      const s = 60 + Math.random()*240;
+      parts.push({
+        x,y,
+        vx: Math.cos(a)*s,
+        vy: Math.sin(a)*s,
+        life: 0.55 + Math.random()*0.35,
+        t: 0,
+        r: 2 + Math.random()*2.8
+      });
+    }
+  }
+
+  function resetRun(keepOverlay=true){
+    running = false;
+    paused = false;
+    gameOver = false;
+    score = 0;
+    streak = 0;
+    combo = 1;
+    lastHitTime = -Infinity;
+    dot.x = W*0.5; dot.y = H*0.5;
+    dot.r = 32;
+    dot.baseSpeed = 165;
+    dot.vx = (Math.random()<.5?-1:1) * (100 + Math.random()*80);
+    dot.vy = (Math.random()<.5?-1:1) * (90 + Math.random()*70);
+    parts.length = 0;
+    updateHUD();
+    cornerInfo.textContent = "Ready";
+    if(keepOverlay) overlay.style.display = "flex";
+    pauseBtn.disabled = true;
+    startBtn.textContent = "Start";
+  }
+
+  function startRun(){
+    if(gameOver) resetRun(false);
+    running = true;
+    paused = false;
+    gameOver = false;
+    overlay.style.display = "none";
+    pauseBtn.disabled = false;
+    startBtn.textContent = "Restart";
+    cornerInfo.textContent = "Go!";
+    beep(620, 0.08, "triangle", 0.05);
+    // Kick off a new movement direction for variety
+    const angle = Math.random()*Math.PI*2;
+    const sp = dot.baseSpeed;
+    dot.vx = Math.cos(angle)*sp;
+    dot.vy = Math.sin(angle)*sp;
+  }
+
+  function endRun(reason="Miss!"){
+    if(mode === Mode.ZEN) return; // Zen never ends
+    running = false;
+    paused = false;
+    gameOver = true;
+    cornerInfo.textContent = reason + " (Game Over)";
+    overlay.style.display = "flex";
+    howText.hidden = true;
+    document.getElementById("panel").querySelector("h2").textContent = "Run ended.";
+    document.getElementById("panel").querySelector("p").innerHTML =
+      `You scored <b>${score}</b>. Best is <b>${best}</b>. Tap Start to try again.`;
+    beep(180, 0.12, "sawtooth", 0.06);
+    beep(120, 0.14, "sawtooth", 0.06);
+    pauseBtn.disabled = true;
+  }
+
+  function togglePause(){
+    if(!running) return;
+    paused = !paused;
+    cornerInfo.textContent = paused ? "Paused" : "Go!";
+    toastPop(paused ? "Paused" : "Unpaused", paused ? "bad" : "good");
+    beep(paused ? 260 : 520, 0.06, "square", 0.04);
+  }
+
+  function toastPop(text, kind="good"){
+    toast.textContent = text;
+    toast.classList.add("show");
+    toast.style.borderColor = kind==="good" ? "rgba(56,211,159,.35)" : "rgba(255,77,109,.35)";
+    toast.style.boxShadow = kind==="good" ? "0 10px 40px rgba(56,211,159,.12)" : "0 10px 40px rgba(255,77,109,.10)";
+    clearTimeout(toast._t);
+    toast._t = setTimeout(()=>toast.classList.remove("show"), 650);
+  }
+
+  function updateHUD(){
+    scoreEl.textContent = score;
+    bestEl.textContent = best;
+    comboEl.textContent = "x" + combo;
+    streakEl.textContent = streak;
+    modeBadge.textContent = mode;
+    tipEl.innerHTML = mode===Mode.CLASSIC
+      ? "Hit the dot before it escapes. <b>One miss ends the run</b>. It gets smaller & faster."
+      : "Practice mode. <b>Misses don’t end</b>, but points are lower. Switch back to Classic for highscores.";
+  }
+
+  // ===== Input =====
+  function getPointerPos(ev){
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left);
+    const y = (ev.clientY - rect.top);
+    return {x,y};
+  }
+
+  function tryHit(x,y){
+    if(!running || paused) return;
+
+    const dx = x - dot.x;
+    const dy = y - dot.y;
+    const hit = (dx*dx + dy*dy) <= (dot.r*dot.r);
+
+    if(hit){
+      const t = now();
+      const dt = t - lastHitTime;
+
+      // Combo window shrinks as speed increases (but never too small)
+      const comboWindow = clamp(720 - (dot.baseSpeed-160)*1.4, 260, 720);
+      if(dt <= comboWindow) combo = clamp(combo + 1, 1, 12);
+      else combo = 1;
+
+      lastHitTime = t;
+      streak++;
+
+      // Scoring: Classic rewards combo more; Zen is lower
+      const base = mode===Mode.CLASSIC ? 10 : 6;
+      const gained = Math.round(base * (1 + (combo-1)*0.42));
+      score += gained;
+
+      if(score > best){
+        best = score;
+        localStorage.setItem(LS_KEY, String(best));
+      }
+
+      // Difficulty ramps
+      dot.baseSpeed = clamp(dot.baseSpeed + (mode===Mode.CLASSIC ? 9 : 6), 160, 520);
+      dot.r = clamp(dot.r - (mode===Mode.CLASSIC ? 1.25 : 0.9), 10, 40);
+
+      // Teleport to a new spot (addictive “one more” feel)
+      const margin = dot.r + 14;
+      dot.x = margin + Math.random()*(W - margin*2);
+      dot.y = margin + Math.random()*(H - margin*2);
+
+      // Random new direction
+      const a = Math.random()*Math.PI*2;
+      dot.vx = Math.cos(a) * dot.baseSpeed;
+      dot.vy = Math.sin(a) * dot.baseSpeed;
+
+      spawnParticles(dot.x, dot.y, 20);
+      toastPop("+" + gained + "  (x" + combo + ")", "good");
+
+      // Satisfying pitch climb
+      beep(440 + combo*55, 0.05, "triangle", 0.05);
+      updateHUD();
+      cornerInfo.textContent = `Speed ${Math.round(dot.baseSpeed)}`;
+
+    }else{
+      // Miss penalty
+      if(mode===Mode.ZEN){
+        // Soft penalty: reset combo & tiny score
+        combo = 1;
+        streak = 0;
+        score = Math.max(0, score - 5);
+        toastPop("Miss (-5)", "bad");
+        beep(220, 0.06, "square", 0.035);
+        updateHUD();
+      }else{
+        toastPop("Miss!", "bad");
+        endRun("Miss!");
+      }
+    }
+  }
+
+  // Pointer events (mobile + desktop)
+  canvas.addEventListener("pointerdown", (ev)=>{
+    ev.preventDefault();
+    canvas.setPointerCapture?.(ev.pointerId);
+    const p = getPointerPos(ev);
+    tryHit(p.x,p.y);
+  }, {passive:false});
+
+  // Keyboard
+  window.addEventListener("keydown", (e)=>{
+    if(e.key === " "){ e.preventDefault(); togglePause(); }
+    if(e.key.toLowerCase() === "r"){ if(running) { resetRun(false); startRun(); } else startRun(); }
+    if(e.key.toLowerCase() === "m"){ toggleMode(); }
+  });
+
+  // Buttons
+  startBtn.addEventListener("click", ()=>{
+    if(!running){ startRun(); }
+    else { resetRun(false); startRun(); }
+  });
+  overlayStart.addEventListener("click", ()=> startRun());
+  pauseBtn.addEventListener("click", togglePause);
+  resetBtn.addEventListener("click", ()=>{
+    localStorage.removeItem(LS_KEY);
+    best = 0;
+    resetRun(true);
+    toastPop("Reset", "bad");
+  });
+
+  soundBtn.addEventListener("click", ()=>{
+    soundOn = !soundOn;
+    soundBtn.textContent = "Sound: " + (soundOn ? "On" : "Off");
+    soundBtn.classList.toggle("on", soundOn);
+    soundBtn.classList.toggle("off", !soundOn);
+    if(soundOn) beep(520, 0.06, "triangle", 0.05);
+  });
+
+  overlayHow.addEventListener("click", ()=>{
+    howText.hidden = !howText.hidden;
+  });
+
+  function toggleMode(){
+    mode = (mode === Mode.CLASSIC) ? Mode.ZEN : Mode.CLASSIC;
+    modeBtn.textContent = "Mode: " + mode;
+    updateHUD();
+    toastPop("Mode: " + mode, "good");
+    beep(560, 0.05, "triangle", 0.05);
+    resetRun(true);
+    // Update overlay text back to default
+    document.getElementById("panel").querySelector("h2").textContent = "Click the dot. Keep the streak.";
+    document.getElementById("panel").querySelector("p").textContent =
+      "Each hit boosts speed and shrinks the target. Chain hits quickly to build combo. One miss ends the run — try to beat your best.";
+  }
+  modeBtn.addEventListener("click", toggleMode);
+
+  // ===== Main Loop =====
+  let lastT = now();
+  function tick(){
+    const t = now();
+    const dt = Math.min(0.033, (t - lastT) / 1000);
+    lastT = t;
+
+    // Background
+    ctx.clearRect(0,0,W,H);
+
+    // soft grid
+    ctx.globalAlpha = 0.12;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
+    const grid = 46;
+    ctx.beginPath();
+    for(let x=0; x<=W; x+=grid){ ctx.moveTo(x,0); ctx.lineTo(x,H); }
+    for(let y=0; y<=H; y+=grid){ ctx.moveTo(0,y); ctx.lineTo(W,y); }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    if(running && !paused){
+      // move dot with bounce
+      dot.x += dot.vx * dt;
+      dot.y += dot.vy * dt;
+
+      const m = dot.r + 6;
+      if(dot.x < m){ dot.x = m; dot.vx *= -1; }
+      if(dot.x > W-m){ dot.x = W-m; dot.vx *= -1; }
+      if(dot.y < m){ dot.y = m; dot.vy *= -1; }
+      if(dot.y > H-m){ dot.y = H-m; dot.vy *= -1; }
+
+      // tiny drift difficulty: speed creeps
+      dot.baseSpeed = clamp(dot.baseSpeed + (mode===Mode.CLASSIC ? 1.2 : 0.8)*dt, 160, 520);
+      const v = Math.hypot(dot.vx, dot.vy);
+      if(v > 1){
+        const scale = dot.baseSpeed / v;
+        dot.vx *= lerp(1, scale, 0.02);
+        dot.vy *= lerp(1, scale, 0.02);
+      }
+    }
+
+    // Particles
+    for(let i=parts.length-1;i>=0;i--){
+      const p = parts[i];
+      p.t += dt;
+      const k = p.t / p.life;
+      if(k >= 1){ parts.splice(i,1); continue; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.94;
+      p.vy *= 0.94;
+
+      ctx.globalAlpha = (1-k) * 0.85;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r*(1-k), 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Dot glow
+    const pulse = running ? (0.6 + 0.4*Math.sin(t/120)) : 0.35;
+    const grd = ctx.createRadialGradient(dot.x, dot.y, dot.r*0.2, dot.x, dot.y, dot.r*2.8);
+    grd.addColorStop(0, `rgba(122,167,255,${0.55*pulse})`);
+    grd.addColorStop(0.45, `rgba(56,211,159,${0.22*pulse})`);
+    grd.addColorStop(1, "rgba(255,255,255,0)");
+
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, dot.r*2.2, 0, Math.PI*2);
+    ctx.fill();
+
+    // Dot core
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI*2);
+    ctx.fill();
+
+    // Dot outline
+    ctx.strokeStyle = "rgba(255,255,255,.30)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, dot.r+1, 0, Math.PI*2);
+    ctx.stroke();
+
+    // Center hint
+    if(!running){
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = "rgba(234,240,255,.85)";
+      ctx.font = "600 16px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("Tap Start, then click the dot.", W/2, H/2 - 8);
+      ctx.globalAlpha = 0.7;
+      ctx.font = "12px system-ui";
+      ctx.fillText("One miss ends the run (Classic).", W/2, H/2 + 14);
+      ctx.globalAlpha = 1;
+    }else if(paused){
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = "rgba(234,240,255,.85)";
+      ctx.font = "700 22px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("Paused", W/2, H/2);
+      ctx.globalAlpha = 1;
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  // Init
+  bestEl.textContent = best;
+  updateHUD();
+  resetRun(true);
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
