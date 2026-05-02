@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arcade in a File - Futureproof Games</title>
+    <!-- Favicon: A simple inline SVG for a polished look without external files -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' font-size='80' text-anchor='middle' dominant-baseline='central'%3E🎮%3C/text%3E%3C/svg%3E">
     <style>
         /* --- General Styles --- */
         :root {
@@ -15,11 +17,12 @@
             --button-bg: #0f3460;
             --button-hover-bg: #e07b39;
             --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            --input-focus-border: #8ab6d6; /* Lighter blue for focus */
         }
 
         body {
             font-family: var(--font-stack);
-            background-color: var(--primary-bg);
+            background: var(--primary-bg); /* Base background */
             color: var(--text-color);
             margin: 0;
             display: flex;
@@ -29,55 +32,96 @@
             padding: 20px;
             box-sizing: border-box;
             line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scroll from subtle animations */
+            background-image: radial-gradient(circle at top left, var(--secondary-bg) 0%, transparent 40%),
+                              radial-gradient(circle at bottom right, var(--border-color) 0%, transparent 50%);
+            background-size: 100% 100%; /* Cover the whole area */
+            background-attachment: fixed; /* Keep background fixed during scroll */
         }
 
         .container {
             background-color: var(--secondary-bg);
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            padding: 25px;
+            border-radius: 12px; /* Slightly more rounded */
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7); /* Deeper shadow */
+            padding: 30px; /* More padding */
             width: 100%;
-            max-width: 900px;
-            border: 1px solid var(--border-color);
-            flex-grow: 1; /* Allows container to grow */
+            max-width: 950px; /* Slightly wider */
+            border: 2px solid var(--border-color); /* Thicker border */
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow: hidden; /* For inner animations */
+            transition: all 0.5s ease-out; /* Smooth transitions for container changes */
         }
 
         h1, h2, h3 {
             color: var(--accent-color);
             text-align: center;
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 25px; /* More space */
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Subtle text shadow */
+        }
+        h1 {
+            font-size: 2.8em; /* Larger header */
+            letter-spacing: 1px;
+            animation: pulse-title 4s infinite ease-in-out; /* Animation for main title */
+        }
+        @keyframes pulse-title {
+            0% { transform: scale(1); text-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
+            50% { transform: scale(1.02); text-shadow: 0 0 15px var(--accent-color); }
+            100% { transform: scale(1); text-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
         }
 
         p {
             margin-bottom: 1em;
+            color: var(--text-color);
         }
 
         button {
             background-color: var(--button-bg);
             color: var(--text-color);
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 12px 22px; /* Slightly larger buttons */
+            border-radius: 6px; /* Slightly more rounded */
             cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s ease;
+            font-size: 1.05em; /* Slightly larger font */
+            transition: all 0.3s ease; /* Transition all properties */
             margin: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Button shadow */
         }
 
         button:hover {
             background-color: var(--button-hover-bg);
+            transform: translateY(-2px) scale(1.02); /* Lift and slightly enlarge */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Enhanced shadow on hover */
+        }
+        button:active {
+            transform: translateY(1px) scale(0.98); /* Press effect */
+            background-color: color-mix(in srgb, var(--button-hover-bg) 80%, black); /* Darker active */
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         input[type="text"], input[type="number"] {
             background-color: var(--primary-bg);
             border: 1px solid var(--border-color);
             color: var(--text-color);
-            padding: 8px;
-            border-radius: 4px;
+            padding: 10px; /* More padding */
+            border-radius: 5px; /* More rounded */
             margin-right: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Inner shadow */
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px rgba(138, 182, 214, 0.5); /* Glow effect */
         }
 
         /* --- Navigation --- */
@@ -85,40 +129,77 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            margin-bottom: 25px;
-            gap: 10px;
+            margin-bottom: 30px; /* More space */
+            gap: 12px; /* Increased gap */
+            border-bottom: 1px solid var(--border-color); /* Separator line */
+            padding-bottom: 15px;
         }
 
         .game-nav button {
             background-color: var(--button-bg);
             border: 1px solid var(--border-color);
-            padding: 12px 25px;
+            padding: 14px 28px; /* Larger nav buttons */
             font-weight: bold;
+            position: relative;
+            overflow: hidden; /* For ripple effect */
         }
-
+        .game-nav button::before { /* Underline effect */
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease-out, left 0.3s ease-out;
+        }
         .game-nav button.active {
             background-color: var(--accent-color);
             color: var(--primary-bg);
             border-color: var(--accent-color);
+            transform: translateY(-3px) scale(1.03); /* Lift active tab */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
         }
+        .game-nav button.active::before { /* Active underline */
+            width: 100%;
+            left: 0;
+        }
+        .game-nav button:hover:not(.active)::before {
+            width: 80%;
+            left: 10%;
+        }
+
 
         /* --- Game Display Area --- */
         .game-area {
-            flex-grow: 1; /* Game area grows to fill space */
-            border-top: 1px solid var(--border-color);
+            flex-grow: 1;
             padding-top: 25px;
             margin-top: 25px;
+            position: relative; /* For absolute positioning of content */
+            min-height: 350px; /* Ensure space for games */
         }
 
         .game-content {
-            display: none; /* All game content hidden by default */
+            display: none;
+            position: absolute; /* Allows for smooth transitions */
+            top: 0;
+            left: 0;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
             text-align: center;
             max-width: 700px;
             margin: 0 auto;
+            box-sizing: border-box; /* Include padding in width */
+            padding: 0 15px; /* Add some horizontal padding for smaller screens */
         }
 
         .game-content.active {
-            display: block; /* Active game content shown */
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+            position: relative; /* Take up space when active */
         }
 
         /* --- Tic-Tac-Toe Specifics --- */
@@ -126,12 +207,15 @@
             display: grid;
             grid-template-columns: repeat(3, 100px);
             grid-template-rows: repeat(3, 100px);
-            gap: 5px;
-            width: 315px; /* 3*100px + 2*5px */
-            height: 315px;
-            margin: 20px auto;
-            border: 2px solid var(--border-color);
+            gap: 6px; /* Slightly larger gap */
+            width: 318px; /* 3*100 + 2*6 */
+            height: 318px;
+            margin: 25px auto; /* More margin */
+            border: 3px solid var(--border-color); /* Thicker border */
             background-color: var(--primary-bg);
+            border-radius: 8px; /* Rounded board corners */
+            overflow: hidden; /* For cell borders */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         }
 
         .tictactoe-cell {
@@ -141,129 +225,213 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 3em;
+            font-size: 3.2em; /* Slightly larger font */
             font-weight: bold;
             cursor: pointer;
-            border: 1px solid var(--border-color);
+            border: 1px solid transparent; /* Transparent border for subtle hover */
             color: var(--text-color);
-            transition: background-color 0.2s ease, color 0.2s ease;
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
         }
-
         .tictactoe-cell:hover:not(.x):not(.o) {
-            background-color: #3d3d5c; /* Lighter secondary */
+            background-color: #3d3d5c;
+            transform: scale(1.05); /* Pop effect on hover */
+            border-color: var(--accent-color);
         }
-
         .tictactoe-cell.x {
-            color: #ff6347; /* Tomato */
+            color: #ff6347;
+            text-shadow: 0 0 8px rgba(255, 99, 71, 0.7); /* Glow for X */
         }
-
         .tictactoe-cell.o {
-            color: #4682b4; /* SteelBlue */
+            color: #4682b4;
+            text-shadow: 0 0 8px rgba(70, 130, 180, 0.7); /* Glow for O */
+        }
+        .tictactoe-cell.winning-cell {
+            background-color: #6a008a; /* Purple for winning cells */
+            color: #fff;
+            animation: win-pulse 1s infinite alternate;
+        }
+        @keyframes win-pulse {
+            from { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
+            to { transform: scale(1.1); box-shadow: 0 0 20px rgba(255,255,255,0.7); }
         }
 
         #tictactoe-status {
-            margin-top: 15px;
-            font-size: 1.2em;
+            margin-top: 20px;
+            font-size: 1.4em; /* Larger status text */
             font-weight: bold;
+            min-height: 1.5em; /* Prevent layout shift */
         }
 
         /* --- Text Adventure Specifics --- */
         #adventure-output {
             background-color: var(--primary-bg);
             border: 1px solid var(--border-color);
-            padding: 15px;
-            min-height: 150px;
+            padding: 20px; /* More padding */
+            min-height: 180px; /* Taller output */
             text-align: left;
-            margin: 20px auto;
-            max-width: 600px;
+            margin: 25px auto;
+            max-width: 650px;
             overflow-y: auto;
-            border-radius: 5px;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            line-height: 1.8; /* Better readability */
+            font-size: 1.05em;
+            color: #c0c0c0; /* Slightly lighter text for output */
+        }
+        #adventure-output .typed-text span {
+            display: inline-block; /* For caret animation */
+        }
+        #adventure-output .typed-text::after {
+            content: '|';
+            animation: blink-caret 0.75s step-end infinite;
+            color: var(--accent-color);
+        }
+        @keyframes blink-caret {
+            from, to { opacity: 0; }
+            50% { opacity: 1; }
         }
 
         #adventure-choices {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 12px;
+            margin-top: 20px;
         }
 
         /* --- Guess the Number Specifics --- */
         #guess-input {
-            width: 80px;
+            width: 100px; /* Wider input */
             text-align: center;
-            font-size: 1.1em;
+            font-size: 1.2em;
+            padding: 12px; /* More padding */
         }
         #guess-status {
-            margin-top: 15px;
-            font-size: 1.1em;
+            margin-top: 20px;
+            font-size: 1.2em;
+            min-height: 1.5em;
+            font-weight: bold;
         }
         #guess-attempts {
-            font-size: 0.9em;
+            font-size: 1em;
             color: #a0a0a0;
+            margin-top: 10px;
+        }
+        #high-scores {
+            background-color: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 20px;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
+        }
+        #high-scores h3 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: var(--accent-color);
+        }
+        #high-scores ol {
+            list-style-type: decimal;
+            padding-left: 20px;
+            margin: 0;
+            color: var(--text-color);
+        }
+        #high-scores li {
+            padding: 3px 0;
         }
 
         /* --- Rock Paper Scissors Specifics --- */
         .rps-choices {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 20px; /* More gap */
+            margin-top: 25px;
             flex-wrap: wrap;
         }
         .rps-choices button {
-            padding: 15px 30px;
-            font-size: 1.2em;
+            padding: 18px 35px; /* Larger RPS buttons */
+            font-size: 1.3em; /* Larger font */
+            min-width: 150px; /* Ensure consistent width */
         }
         #rps-result {
-            margin-top: 20px;
-            font-size: 1.2em;
+            margin-top: 25px;
+            font-size: 1.3em;
             font-weight: bold;
+            min-height: 1.5em;
         }
         #rps-score {
-            margin-top: 10px;
-            font-size: 1em;
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: var(--text-color);
         }
-
 
         /* --- Footer --- */
         footer {
-            margin-top: 30px;
-            font-size: 0.8em;
+            margin-top: 40px; /* More space */
+            font-size: 0.85em;
             color: #a0a0a0;
             text-align: center;
-            padding: 15px;
+            padding: 20px;
             border-top: 1px solid var(--border-color);
             width: 100%;
-            max-width: 900px;
+            max-width: 950px; /* Match container width */
         }
 
         /* --- Responsive Design --- */
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
             .container {
                 padding: 15px;
+                border-radius: 8px;
+            }
+            h1 {
+                font-size: 2em;
             }
             .game-nav {
                 flex-direction: column;
-                gap: 5px;
+                gap: 8px;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
             }
             .game-nav button {
                 width: 100%;
+                padding: 10px 15px;
+            }
+            .game-area {
+                padding-top: 15px;
+                margin-top: 15px;
+                min-height: 300px;
             }
             #tictactoe-board {
                 grid-template-columns: repeat(3, 80px);
                 grid-template-rows: repeat(3, 80px);
-                width: 255px;
-                height: 255px;
+                width: 258px; /* 3*80 + 2*6 */
+                height: 258px;
             }
             .tictactoe-cell {
                 width: 80px;
                 height: 80px;
                 font-size: 2.5em;
             }
+            .rps-choices {
+                gap: 10px;
+            }
             .rps-choices button {
-                padding: 10px 20px;
-                font-size: 1em;
+                padding: 12px 20px;
+                font-size: 1.1em;
+                min-width: unset;
+            }
+            #adventure-output {
+                margin: 15px auto;
+                padding: 15px;
+            }
+            input[type="text"], input[type="number"] {
+                padding: 8px;
             }
         }
     </style>
@@ -272,7 +440,7 @@
 
     <div class="container">
         <h1>🎮 Arcade in a File 💾</h1>
-        <p>Welcome to your futureproof, one-file web arcade! No internet required after initial download. Built with pure HTML, CSS, and JavaScript.</p>
+        <p>Welcome to your futureproof, one-file web arcade! No internet required after initial download. Built with pure HTML, CSS, and JavaScript. Game data is saved locally in your browser.</p>
 
         <nav class="game-nav">
             <button data-game="home" class="active">Home</button>
@@ -290,6 +458,7 @@
                     <li><strong>No External Dependencies:</strong> Everything is self-contained.</li>
                     <li><strong>Vanilla Web Technologies:</strong> Uses only standard HTML, CSS, and JavaScript.</li>
                     <li><strong>Offline Play:</strong> Save this single HTML file to your computer, and you can play it anytime, anywhere, without an internet connection.</li>
+                    <li><strong>Local Persistence:</strong> Game progress and high scores are saved right here in your browser's local storage!</li>
                     <li><strong>Minimalist Design:</strong> Focused on functionality and speed.</li>
                 </ul>
                 <p>Enjoy the timeless fun!</p>
@@ -329,6 +498,12 @@
                 <button id="guess-reset">Play Again</button>
                 <div id="guess-status"></div>
                 <div id="guess-attempts">Attempts: 0</div>
+                <div id="high-scores">
+                    <h3>Top Scores (Least Attempts)</h3>
+                    <ol id="guess-high-score-list">
+                        <li>No scores yet!</li>
+                    </ol>
+                </div>
             </div>
 
             <!-- ROCK PAPER SCISSORS GAME -->
@@ -349,10 +524,42 @@
     </div>
 
     <footer>
-        <p>&copy; 2023 Futureproof Arcade. All games are open-source and entirely self-contained within this file.</p>
+        <p>&copy; 2023 Futureproof Arcade. All games are open-source and entirely self-contained within this file. <br>Local game data provided by browser's localStorage.</p>
     </footer>
 
     <script>
+        // --- Utility for Local Storage (our "backend") ---
+        const LocalStorageUtil = {
+            save: (key, value) => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (e) {
+                    console.error("Error saving to local storage:", e);
+                    return false;
+                }
+            },
+            load: (key, defaultValue) => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : defaultValue;
+                } catch (e) {
+                    console.error("Error loading from local storage:", e);
+                    return defaultValue;
+                }
+            },
+            remove: (key) => {
+                try {
+                    localStorage.removeItem(key);
+                    return true;
+                } catch (e) {
+                    console.error("Error removing from local storage:", e);
+                    return false;
+                }
+            }
+        };
+
+
         // --- Game Navigation Logic ---
         document.addEventListener('DOMContentLoaded', () => {
             const navButtons = document.querySelectorAll('.game-nav button');
@@ -362,14 +569,21 @@
                 gameContents.forEach(content => {
                     content.classList.remove('active');
                 });
-                document.getElementById(`${gameId}-content`).classList.add('active');
+                const activeContent = document.getElementById(`${gameId}-content`);
+                if (activeContent) {
+                    activeContent.classList.add('active');
+                }
 
                 navButtons.forEach(button => {
                     button.classList.remove('active');
                 });
-                document.querySelector(`.game-nav button[data-game="${gameId}"]`).classList.add('active');
+                const activeButton = document.querySelector(`.game-nav button[data-game="${gameId}"]`);
+                if (activeButton) {
+                    activeButton.classList.add('active');
+                }
 
                 // Initialize/reset game specific logic when its tab is opened
+                // Ensure proper re-initialization to load saved state
                 switch (gameId) {
                     case 'tictactoe':
                         TicTacToe.init();
@@ -402,8 +616,9 @@
             let board;
             let currentPlayer;
             let isGameActive;
+            let winningCells = [];
 
-            const cells = document.querySelectorAll('.tictactoe-cell');
+            const cells = document.querySelectorAll('#tictactoe-content .tictactoe-cell');
             const statusDisplay = document.getElementById('tictactoe-status');
             const resetButton = document.getElementById('tictactoe-reset');
 
@@ -415,6 +630,7 @@
 
             function handleResultValidation() {
                 let roundWon = false;
+                winningCells = [];
                 for (let i = 0; i < winningConditions.length; i++) {
                     const winCondition = winningConditions[i];
                     let a = board[winCondition[0]];
@@ -425,28 +641,39 @@
                     }
                     if (a === b && b === c) {
                         roundWon = true;
+                        winningCells = winCondition; // Store winning cells
                         break;
                     }
                 }
 
                 if (roundWon) {
-                    statusDisplay.innerHTML = `Player ${currentPlayer} has won!`;
+                    statusDisplay.innerHTML = `Player <span style="color:${currentPlayer === 'X' ? '#ff6347' : '#4682b4'};">${currentPlayer}</span> has won!`;
                     isGameActive = false;
+                    highlightWinningCells();
+                    LocalStorageUtil.remove('tictactoeState'); // Clear saved game
                     return;
                 }
 
                 if (!board.includes('')) {
                     statusDisplay.innerHTML = 'It\'s a draw!';
                     isGameActive = false;
+                    LocalStorageUtil.remove('tictactoeState'); // Clear saved game
                     return;
                 }
 
                 changePlayer();
+                saveGame();
+            }
+
+            function highlightWinningCells() {
+                winningCells.forEach(index => {
+                    cells[index].classList.add('winning-cell');
+                });
             }
 
             function changePlayer() {
                 currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-                statusDisplay.innerHTML = `It's ${currentPlayer}'s turn`;
+                statusDisplay.innerHTML = `It's <span style="color:${currentPlayer === 'X' ? '#ff6347' : '#4682b4'};">${currentPlayer}</span>'s turn`;
             }
 
             function handleCellClick(clickedCellEvent) {
@@ -459,7 +686,7 @@
 
                 board[clickedCellIndex] = currentPlayer;
                 clickedCell.innerHTML = currentPlayer;
-                clickedCell.classList.add(currentPlayer.toLowerCase()); // Add class for styling
+                clickedCell.classList.add(currentPlayer.toLowerCase());
                 handleResultValidation();
             }
 
@@ -467,17 +694,53 @@
                 board = ['', '', '', '', '', '', '', '', ''];
                 currentPlayer = 'X';
                 isGameActive = true;
-                statusDisplay.innerHTML = `It's ${currentPlayer}'s turn`;
+                winningCells = [];
+                statusDisplay.innerHTML = `It's <span style="color:#ff6347;">X</span>'s turn`;
                 cells.forEach(cell => {
                     cell.innerHTML = '';
-                    cell.classList.remove('x', 'o');
+                    cell.classList.remove('x', 'o', 'winning-cell');
                 });
+                LocalStorageUtil.remove('tictactoeState'); // Clear saved game on reset
+            }
+
+            function saveGame() {
+                LocalStorageUtil.save('tictactoeState', { board, currentPlayer, isGameActive });
+            }
+
+            function loadGame() {
+                const savedState = LocalStorageUtil.load('tictactoeState', null);
+                if (savedState) {
+                    board = savedState.board;
+                    currentPlayer = savedState.currentPlayer;
+                    isGameActive = savedState.isGameActive;
+
+                    cells.forEach((cell, index) => {
+                        cell.innerHTML = board[index];
+                        cell.classList.remove('x', 'o', 'winning-cell');
+                        if (board[index]) {
+                            cell.classList.add(board[index].toLowerCase());
+                        }
+                    });
+                    if (isGameActive) {
+                        statusDisplay.innerHTML = `It's <span style="color:${currentPlayer === 'X' ? '#ff6347' : '#4682b4'};">${currentPlayer}</span>'s turn`;
+                    } else {
+                        // Re-validate to determine win/draw state if not active
+                        handleResultValidation(); // This will correctly set status and highlights
+                    }
+                } else {
+                    resetGame();
+                }
             }
 
             function init() {
+                // Clear existing listeners to prevent duplicates on tab switch
+                cells.forEach(cell => cell.removeEventListener('click', handleCellClick));
+                resetButton.removeEventListener('click', resetGame);
+
+                // Add listeners
                 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
                 resetButton.addEventListener('click', resetGame);
-                resetGame(); // Initialize game state on load
+                loadGame(); // Load game state
             }
 
             return { init };
@@ -533,26 +796,47 @@
             };
 
             let currentScene = 'start';
+            let typingInterval;
+
+            function typeText(text, element, callback) {
+                let i = 0;
+                element.innerHTML = '<span class="typed-text"></span>';
+                const typedTextSpan = element.querySelector('.typed-text');
+                if (!typedTextSpan) return; // Should not happen
+
+                clearInterval(typingInterval);
+                typingInterval = setInterval(() => {
+                    if (i < text.length) {
+                        typedTextSpan.textContent += text.charAt(i);
+                        i++;
+                        outputDiv.scrollTop = outputDiv.scrollHeight; // Keep scrolled to bottom
+                    } else {
+                        clearInterval(typingInterval);
+                        if (callback) callback();
+                    }
+                }, 30); // Typing speed
+            }
 
             function renderScene() {
                 const scene = story[currentScene];
-                outputDiv.innerHTML = `<p>${scene.text}</p>`;
-                choicesDiv.innerHTML = '';
+                choicesDiv.innerHTML = ''; // Clear choices immediately
 
-                scene.choices.forEach(choice => {
-                    const button = document.createElement('button');
-                    button.textContent = choice.text;
-                    button.addEventListener('click', () => {
-                        currentScene = choice.next;
-                        renderScene();
+                typeText(scene.text, outputDiv, () => {
+                    scene.choices.forEach(choice => {
+                        const button = document.createElement('button');
+                        button.textContent = choice.text;
+                        button.addEventListener('click', () => {
+                            currentScene = choice.next;
+                            LocalStorageUtil.save('adventureState', currentScene); // Save current scene
+                            renderScene();
+                        });
+                        choicesDiv.appendChild(button);
                     });
-                    choicesDiv.appendChild(button);
                 });
-                outputDiv.scrollTop = outputDiv.scrollHeight; // Scroll to bottom
             }
 
             function init() {
-                currentScene = 'start'; // Reset to start
+                currentScene = LocalStorageUtil.load('adventureState', 'start'); // Load saved state or start
                 renderScene();
             }
 
@@ -565,12 +849,14 @@
             let secretNumber;
             let attempts;
             let isGameOver;
+            let highScores = []; // [{ attempts: 5, date: '...' }]
 
             const guessInput = document.getElementById('guess-input');
             const guessButton = document.getElementById('guess-button');
             const guessResetButton = document.getElementById('guess-reset');
             const guessStatus = document.getElementById('guess-status');
             const guessAttempts = document.getElementById('guess-attempts');
+            const highScoreList = document.getElementById('guess-high-score-list');
 
             function startGame() {
                 secretNumber = Math.floor(Math.random() * 100) + 1;
@@ -582,6 +868,9 @@
                 guessAttempts.textContent = `Attempts: ${attempts}`;
                 guessButton.disabled = false;
                 guessInput.disabled = false;
+                guessStatus.style.color = var('--text-color'); // Reset color
+                loadHighScores(); // Load scores on start/reset
+                renderHighScores();
             }
 
             function checkGuess() {
@@ -591,38 +880,81 @@
 
                 if (isNaN(guess) || guess < 1 || guess > 100) {
                     guessStatus.textContent = 'Please enter a valid number between 1 and 100.';
+                    guessStatus.style.color = 'orange';
                     return;
                 }
 
                 attempts++;
                 guessAttempts.textContent = `Attempts: ${attempts}`;
+                guessStatus.style.color = var('--text-color'); // Reset color if it was orange
 
                 if (guess === secretNumber) {
                     guessStatus.textContent = `Congratulations! You guessed the number ${secretNumber} in ${attempts} attempts!`;
+                    guessStatus.style.color = 'lightgreen';
                     isGameOver = true;
                     guessButton.disabled = true;
                     guessInput.disabled = true;
+                    addHighScore(attempts);
                 } else if (guess < secretNumber) {
                     guessStatus.textContent = 'Too low! Try again.';
+                    guessStatus.style.color = 'skyblue';
                 } else {
                     guessStatus.textContent = 'Too high! Try again.';
+                    guessStatus.style.color = 'lightcoral';
                 }
                 guessInput.value = '';
                 guessInput.focus();
             }
 
+            function loadHighScores() {
+                highScores = LocalStorageUtil.load('guessHighScores', []);
+                // Sort by attempts ascending (lower is better)
+                highScores.sort((a, b) => a.attempts - b.attempts);
+                // Keep only top 10 scores
+                highScores = highScores.slice(0, 10);
+            }
+
+            function saveHighScores() {
+                LocalStorageUtil.save('guessHighScores', highScores);
+            }
+
+            function addHighScore(newAttempts) {
+                highScores.push({ attempts: newAttempts, date: new Date().toLocaleDateString() });
+                loadHighScores(); // Re-sort and re-slice
+                saveHighScores();
+                renderHighScores();
+            }
+
+            function renderHighScores() {
+                highScoreList.innerHTML = '';
+                if (highScores.length === 0) {
+                    const li = document.createElement('li');
+                    li.textContent = 'No scores yet!';
+                    highScoreList.appendChild(li);
+                } else {
+                    highScores.forEach((score, index) => {
+                        const li = document.createElement('li');
+                        li.textContent = `${score.attempts} attempts (${score.date})`;
+                        highScoreList.appendChild(li);
+                    });
+                }
+            }
+
             function init() {
-                guessButton.removeEventListener('click', checkGuess); // Prevent multiple listeners
+                guessButton.removeEventListener('click', checkGuess);
+                guessInput.removeEventListener('keypress', handleKeyPress); // Remove keypress listener
                 guessResetButton.removeEventListener('click', startGame);
 
                 guessButton.addEventListener('click', checkGuess);
-                guessInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        checkGuess();
-                    }
-                });
+                guessInput.addEventListener('keypress', handleKeyPress);
                 guessResetButton.addEventListener('click', startGame);
                 startGame();
+            }
+
+            function handleKeyPress(e) {
+                if (e.key === 'Enter') {
+                    checkGuess();
+                }
             }
 
             return { init };
@@ -634,12 +966,17 @@
             let playerScore = 0;
             let computerScore = 0;
 
-            const rpsChoices = document.querySelectorAll('.rps-choices button');
+            const rpsChoices = document.querySelectorAll('#rps-content .rps-choices button');
             const rpsResult = document.getElementById('rps-result');
-            const rpsScore = document.getElementById('rps-score');
+            const rpsScoreDisplay = document.getElementById('rps-score');
             const rpsResetButton = document.getElementById('rps-reset');
 
             const choices = ['rock', 'paper', 'scissors'];
+            const choiceEmojis = {
+                'rock': '🪨',
+                'paper': '📄',
+                'scissors': '✂️'
+            };
 
             function getComputerChoice() {
                 const randomIndex = Math.floor(Math.random() * choices.length);
@@ -648,44 +985,63 @@
 
             function playRound(playerChoice) {
                 const computerChoice = getComputerChoice();
-                let result = '';
+                let resultText = '';
+                let resultColor = var('--text-color');
 
                 if (playerChoice === computerChoice) {
-                    result = `It's a tie! Both chose ${playerChoice}.`;
+                    resultText = `It's a tie! Both chose ${choiceEmojis[playerChoice]} ${playerChoice}.`;
+                    resultColor = 'skyblue';
                 } else if (
                     (playerChoice === 'rock' && computerChoice === 'scissors') ||
                     (playerChoice === 'paper' && computerChoice === 'rock') ||
                     (playerChoice === 'scissors' && computerChoice === 'paper')
                 ) {
                     playerScore++;
-                    result = `You win! ${playerChoice} beats ${computerChoice}.`;
+                    resultText = `You win! ${choiceEmojis[playerChoice]} ${playerChoice} beats ${choiceEmojis[computerChoice]} ${computerChoice}.`;
+                    resultColor = 'lightgreen';
                 } else {
                     computerScore++;
-                    result = `You lose! ${computerChoice} beats ${playerChoice}.`;
+                    resultText = `You lose! ${choiceEmojis[computerChoice]} ${computerChoice} beats ${choiceEmojis[playerChoice]} ${playerChoice}.`;
+                    resultColor = 'lightcoral';
                 }
-                rpsResult.textContent = result;
+                rpsResult.textContent = resultText;
+                rpsResult.style.color = resultColor;
                 updateScoreDisplay();
+                saveScore();
             }
 
             function updateScoreDisplay() {
-                rpsScore.textContent = `Player: ${playerScore} | Computer: ${computerScore}`;
+                rpsScoreDisplay.innerHTML = `Player: <span style="color:lightgreen;">${playerScore}</span> | Computer: <span style="color:lightcoral;">${computerScore}</span>`;
             }
 
             function resetScore() {
                 playerScore = 0;
                 computerScore = 0;
                 rpsResult.textContent = '';
+                rpsResult.style.color = var('--text-color');
+                updateScoreDisplay();
+                saveScore(); // Save reset score
+            }
+
+            function saveScore() {
+                LocalStorageUtil.save('rpsScore', { playerScore, computerScore });
+            }
+
+            function loadScore() {
+                const savedScore = LocalStorageUtil.load('rpsScore', { playerScore: 0, computerScore: 0 });
+                playerScore = savedScore.playerScore;
+                computerScore = savedScore.computerScore;
                 updateScoreDisplay();
             }
 
             function init() {
                 rpsChoices.forEach(button => {
-                    button.removeEventListener('click', handleChoice); // Prevent multiple listeners
+                    button.removeEventListener('click', handleChoice);
                     button.addEventListener('click', handleChoice);
                 });
                 rpsResetButton.removeEventListener('click', resetScore);
                 rpsResetButton.addEventListener('click', resetScore);
-                updateScoreDisplay(); // Display initial score
+                loadScore(); // Load score on initialization
             }
 
             function handleChoice(event) {
