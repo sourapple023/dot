@@ -1,697 +1,700 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>One More Dot</title>
-<style>
-  :root{
-    --bg:#0b1020;
-    --panel:rgba(255,255,255,.06);
-    --panel2:rgba(255,255,255,.10);
-    --text:#eaf0ff;
-    --muted:rgba(234,240,255,.65);
-    --good:#38d39f;
-    --bad:#ff4d6d;
-    --accent:#7aa7ff;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-    background: radial-gradient(1200px 700px at 20% 10%, rgba(122,167,255,.22), transparent 55%),
-                radial-gradient(900px 600px at 80% 30%, rgba(56,211,159,.18), transparent 55%),
-                radial-gradient(900px 700px at 30% 85%, rgba(255,77,109,.10), transparent 60%),
-                var(--bg);
-    color:var(--text);
-    overflow:hidden;
-    touch-action: manipulation;
-  }
-  .wrap{
-    position:fixed; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    padding:18px;
-  }
-  .card{
-    width:min(980px,100%);
-    display:grid;
-    grid-template-columns: 320px 1fr;
-    gap:14px;
-  }
-  @media (max-width:860px){
-    .card{grid-template-columns:1fr; grid-template-rows:auto 1fr}
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade in a File - Futureproof Games</title>
+    <style>
+        /* --- General Styles --- */
+        :root {
+            --primary-bg: #1a1a2e;
+            --secondary-bg: #16213e;
+            --accent-color: #e07b39;
+            --text-color: #e0e0e0;
+            --border-color: #0f3460;
+            --button-bg: #0f3460;
+            --button-hover-bg: #e07b39;
+            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
 
-  .hud{
-    background:var(--panel);
-    border:1px solid rgba(255,255,255,.10);
-    border-radius:16px;
-    padding:14px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 20px 80px rgba(0,0,0,.35);
-  }
-  .title{
-    display:flex; align-items:center; justify-content:space-between;
-    gap:10px; margin-bottom:10px;
-  }
-  .title h1{
-    font-size:16px; letter-spacing:.3px; margin:0;
-    display:flex; align-items:center; gap:10px;
-  }
-  .badge{
-    font-size:12px;
-    padding:4px 9px;
-    border-radius:999px;
-    background:linear-gradient(90deg, rgba(122,167,255,.25), rgba(56,211,159,.20));
-    border:1px solid rgba(255,255,255,.12);
-    color:var(--text);
-  }
-  .statgrid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin:10px 0 12px;
-  }
-  .stat{
-    border-radius:14px;
-    background:var(--panel2);
-    border:1px solid rgba(255,255,255,.10);
-    padding:10px;
-  }
-  .stat .label{font-size:11px; color:var(--muted)}
-  .stat .value{font-size:20px; margin-top:4px; font-weight:700}
-  .small{font-size:12px; color:var(--muted); line-height:1.35}
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            line-height: 1.6;
+        }
 
-  .btnrow{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-  button{
-    appearance:none; border:none; outline:none;
-    padding:10px 12px;
-    border-radius:12px;
-    background:rgba(255,255,255,.10);
-    border:1px solid rgba(255,255,255,.12);
-    color:var(--text);
-    cursor:pointer;
-    font-weight:600;
-    transition: transform .06s ease, background .15s ease;
-  }
-  button:hover{background:rgba(255,255,255,.14)}
-  button:active{transform: translateY(1px) scale(.99)}
-  .primary{
-    background:linear-gradient(90deg, rgba(122,167,255,.35), rgba(56,211,159,.25));
-    border:1px solid rgba(255,255,255,.18);
-  }
-  .danger{
-    background:rgba(255,77,109,.18);
-    border:1px solid rgba(255,77,109,.25);
-  }
-  .toggle.on{box-shadow: inset 0 0 0 999px rgba(56,211,159,.10)}
-  .toggle.off{box-shadow: inset 0 0 0 999px rgba(255,77,109,.07)}
+        .container {
+            background-color: var(--secondary-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 25px;
+            width: 100%;
+            max-width: 900px;
+            border: 1px solid var(--border-color);
+            flex-grow: 1; /* Allows container to grow */
+            display: flex;
+            flex-direction: column;
+        }
 
-  .stage{
-    position:relative;
-    background:rgba(0,0,0,.22);
-    border:1px solid rgba(255,255,255,.10);
-    border-radius:16px;
-    overflow:hidden;
-    min-height:520px;
-    height:min(68vh,720px);
-    box-shadow: 0 20px 80px rgba(0,0,0,.35);
-  }
-  .canvas{
-    position:absolute; inset:0;
-    width:100%; height:100%;
-    display:block;
-  }
-  .overlay{
-    position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    padding:18px;
-    pointer-events:none;
-  }
-  .panel{
-    width:min(520px, 100%);
-    background:rgba(10,14,28,.55);
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:18px;
-    padding:16px;
-    backdrop-filter: blur(10px);
-    pointer-events:auto;
-  }
-  .panel h2{margin:0 0 8px; font-size:18px}
-  .panel p{margin:0; color:var(--muted); font-size:13px; line-height:1.45}
-  .panel .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-  .keyhint{
-    display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;
-    color:var(--muted); font-size:12px;
-  }
-  kbd{
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size:11px;
-    padding:3px 7px;
-    border-radius:8px;
-    background:rgba(255,255,255,.09);
-    border:1px solid rgba(255,255,255,.12);
-    color:var(--text);
-  }
-  .toast{
-    position:absolute;
-    left:50%; top:16px;
-    transform:translateX(-50%);
-    padding:8px 12px;
-    border-radius:999px;
-    background:rgba(10,14,28,.60);
-    border:1px solid rgba(255,255,255,.14);
-    color:var(--text);
-    font-size:12px;
-    backdrop-filter: blur(10px);
-    opacity:0;
-    transition: opacity .2s ease, transform .2s ease;
-    pointer-events:none;
-  }
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
-  .corner{
-    position:absolute; right:12px; bottom:12px;
-    font-size:12px; color:var(--muted);
-    background:rgba(0,0,0,.18);
-    border:1px solid rgba(255,255,255,.10);
-    padding:8px 10px;
-    border-radius:12px;
-  }
-</style>
+        h1, h2, h3 {
+            color: var(--accent-color);
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        p {
+            margin-bottom: 1em;
+        }
+
+        button {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: var(--button-hover-bg);
+        }
+
+        input[type="text"], input[type="number"] {
+            background-color: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        /* --- Navigation --- */
+        .game-nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 25px;
+            gap: 10px;
+        }
+
+        .game-nav button {
+            background-color: var(--button-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 25px;
+            font-weight: bold;
+        }
+
+        .game-nav button.active {
+            background-color: var(--accent-color);
+            color: var(--primary-bg);
+            border-color: var(--accent-color);
+        }
+
+        /* --- Game Display Area --- */
+        .game-area {
+            flex-grow: 1; /* Game area grows to fill space */
+            border-top: 1px solid var(--border-color);
+            padding-top: 25px;
+            margin-top: 25px;
+        }
+
+        .game-content {
+            display: none; /* All game content hidden by default */
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .game-content.active {
+            display: block; /* Active game content shown */
+        }
+
+        /* --- Tic-Tac-Toe Specifics --- */
+        #tictactoe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            width: 315px; /* 3*100px + 2*5px */
+            height: 315px;
+            margin: 20px auto;
+            border: 2px solid var(--border-color);
+            background-color: var(--primary-bg);
+        }
+
+        .tictactoe-cell {
+            width: 100px;
+            height: 100px;
+            background-color: var(--secondary-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .tictactoe-cell:hover:not(.x):not(.o) {
+            background-color: #3d3d5c; /* Lighter secondary */
+        }
+
+        .tictactoe-cell.x {
+            color: #ff6347; /* Tomato */
+        }
+
+        .tictactoe-cell.o {
+            color: #4682b4; /* SteelBlue */
+        }
+
+        #tictactoe-status {
+            margin-top: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* --- Text Adventure Specifics --- */
+        #adventure-output {
+            background-color: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            min-height: 150px;
+            text-align: left;
+            margin: 20px auto;
+            max-width: 600px;
+            overflow-y: auto;
+            border-radius: 5px;
+        }
+
+        #adventure-choices {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* --- Guess the Number Specifics --- */
+        #guess-input {
+            width: 80px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        #guess-status {
+            margin-top: 15px;
+            font-size: 1.1em;
+        }
+        #guess-attempts {
+            font-size: 0.9em;
+            color: #a0a0a0;
+        }
+
+        /* --- Rock Paper Scissors Specifics --- */
+        .rps-choices {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .rps-choices button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+        }
+        #rps-result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        #rps-score {
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+
+        /* --- Footer --- */
+        footer {
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #a0a0a0;
+            text-align: center;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .game-nav {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .game-nav button {
+                width: 100%;
+            }
+            #tictactoe-board {
+                grid-template-columns: repeat(3, 80px);
+                grid-template-rows: repeat(3, 80px);
+                width: 255px;
+                height: 255px;
+            }
+            .tictactoe-cell {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5em;
+            }
+            .rps-choices button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <div class="hud">
-      <div class="title">
-        <h1>One More Dot <span class="badge">tap / click</span></h1>
-        <span class="badge" id="modeBadge">Classic</span>
-      </div>
 
-      <div class="statgrid">
-        <div class="stat">
-          <div class="label">Score</div>
-          <div class="value" id="score">0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Best</div>
-          <div class="value" id="best">0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Combo</div>
-          <div class="value" id="combo">x1</div>
-        </div>
-        <div class="stat">
-          <div class="label">Streak</div>
-          <div class="value" id="streak">0</div>
-        </div>
-      </div>
+    <div class="container">
+        <h1>🎮 Arcade in a File 💾</h1>
+        <p>Welcome to your futureproof, one-file web arcade! No internet required after initial download. Built with pure HTML, CSS, and JavaScript.</p>
 
-      <div class="small" id="tip">
-        Hit the dot before it escapes. Misses end the run. The dot gets smaller & faster.
-      </div>
+        <nav class="game-nav">
+            <button data-game="home" class="active">Home</button>
+            <button data-game="tictactoe">Tic-Tac-Toe</button>
+            <button data-game="adventure">Text Adventure</button>
+            <button data-game="guess-number">Guess the Number</button>
+            <button data-game="rps">Rock Paper Scissors</button>
+        </nav>
 
-      <div class="btnrow">
-        <button class="primary" id="startBtn">Start</button>
-        <button id="pauseBtn" disabled>Pause</button>
-        <button id="resetBtn" class="danger">Reset</button>
-        <button id="soundBtn" class="toggle on" title="Toggle sound">Sound: On</button>
-        <button id="modeBtn" title="Toggle mode">Mode: Classic</button>
-      </div>
+        <div class="game-area">
+            <div id="home-content" class="game-content active">
+                <h2>Welcome Explorer!</h2>
+                <p>Select a game from the navigation bar above to dive in. These games are designed for maximum resilience and longevity:</p>
+                <ul>
+                    <li><strong>No External Dependencies:</strong> Everything is self-contained.</li>
+                    <li><strong>Vanilla Web Technologies:</strong> Uses only standard HTML, CSS, and JavaScript.</li>
+                    <li><strong>Offline Play:</strong> Save this single HTML file to your computer, and you can play it anytime, anywhere, without an internet connection.</li>
+                    <li><strong>Minimalist Design:</strong> Focused on functionality and speed.</li>
+                </ul>
+                <p>Enjoy the timeless fun!</p>
+            </div>
 
-      <div class="keyhint">
-        <span><kbd>Space</kbd> pause</span>
-        <span><kbd>R</kbd> restart</span>
-        <span><kbd>M</kbd> mode</span>
-      </div>
+            <!-- TIC-TAC-TOE GAME -->
+            <div id="tictactoe-content" class="game-content">
+                <h2>Tic-Tac-Toe</h2>
+                <div id="tictactoe-board">
+                    <div class="tictactoe-cell" data-cell-index="0"></div>
+                    <div class="tictactoe-cell" data-cell-index="1"></div>
+                    <div class="tictactoe-cell" data-cell-index="2"></div>
+                    <div class="tictactoe-cell" data-cell-index="3"></div>
+                    <div class="tictactoe-cell" data-cell-index="4"></div>
+                    <div class="tictactoe-cell" data-cell-index="5"></div>
+                    <div class="tictactoe-cell" data-cell-index="6"></div>
+                    <div class="tictactoe-cell" data-cell-index="7"></div>
+                    <div class="tictactoe-cell" data-cell-index="8"></div>
+                </div>
+                <div id="tictactoe-status"></div>
+                <button id="tictactoe-reset">Reset Game</button>
+            </div>
+
+            <!-- TEXT ADVENTURE GAME -->
+            <div id="adventure-content" class="game-content">
+                <h2>The Forgotten Scroll (Text Adventure)</h2>
+                <div id="adventure-output"></div>
+                <div id="adventure-choices"></div>
+            </div>
+
+            <!-- GUESS THE NUMBER GAME -->
+            <div id="guess-number-content" class="game-content">
+                <h2>Guess the Number</h2>
+                <p>I'm thinking of a number between 1 and 100. Can you guess it?</p>
+                <input type="number" id="guess-input" min="1" max="100" placeholder="Enter guess">
+                <button id="guess-button">Guess</button>
+                <button id="guess-reset">Play Again</button>
+                <div id="guess-status"></div>
+                <div id="guess-attempts">Attempts: 0</div>
+            </div>
+
+            <!-- ROCK PAPER SCISSORS GAME -->
+            <div id="rps-content" class="game-content">
+                <h2>Rock Paper Scissors</h2>
+                <p>Choose your weapon!</p>
+                <div class="rps-choices">
+                    <button id="rps-rock">🪨 Rock</button>
+                    <button id="rps-paper">📄 Paper</button>
+                    <button id="rps-scissors">✂️ Scissors</button>
+                </div>
+                <div id="rps-result"></div>
+                <div id="rps-score">Player: 0 | Computer: 0</div>
+                <button id="rps-reset">Reset Score</button>
+            </div>
+
+        </div>
     </div>
 
-    <div class="stage" id="stage">
-      <canvas class="canvas" id="c"></canvas>
+    <footer>
+        <p>&copy; 2023 Futureproof Arcade. All games are open-source and entirely self-contained within this file.</p>
+    </footer>
 
-      <div class="toast" id="toast">Nice!</div>
+    <script>
+        // --- Game Navigation Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const navButtons = document.querySelectorAll('.game-nav button');
+            const gameContents = document.querySelectorAll('.game-content');
 
-      <div class="overlay" id="overlay">
-        <div class="panel" id="panel">
-          <h2>Click the dot. Keep the streak.</h2>
-          <p>
-            Each hit boosts speed and shrinks the target. Chain hits quickly to build combo.
-            One miss ends the run — try to beat your best.
-          </p>
-          <div class="row">
-            <button class="primary" id="overlayStart">Start</button>
-            <button id="overlayHow">How it works</button>
-          </div>
-          <p class="small" style="margin-top:10px" id="howText" hidden>
-            <b>Classic:</b> one miss ends the run.<br>
-            <b>Zen:</b> misses don’t end, but score multiplier is lower — practice mode.
-          </p>
-        </div>
-      </div>
+            function showGame(gameId) {
+                gameContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${gameId}-content`).classList.add('active');
 
-      <div class="corner" id="cornerInfo">Ready</div>
-    </div>
-  </div>
-</div>
+                navButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
+                document.querySelector(`.game-nav button[data-game="${gameId}"]`).classList.add('active');
 
-<script>
-(() => {
-  // ===== Helpers =====
-  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
-  const lerp = (a,b,t)=>a+(b-a)*t;
-  const now = ()=>performance.now();
+                // Initialize/reset game specific logic when its tab is opened
+                switch (gameId) {
+                    case 'tictactoe':
+                        TicTacToe.init();
+                        break;
+                    case 'adventure':
+                        TextAdventure.init();
+                        break;
+                    case 'guess-number':
+                        GuessTheNumber.init();
+                        break;
+                    case 'rps':
+                        RockPaperScissors.init();
+                        break;
+                }
+            }
 
-  // ===== Elements =====
-  const canvas = document.getElementById("c");
-  const stage  = document.getElementById("stage");
-  const ctx = canvas.getContext("2d");
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    showGame(button.dataset.game);
+                });
+            });
 
-  const scoreEl  = document.getElementById("score");
-  const bestEl   = document.getElementById("best");
-  const comboEl  = document.getElementById("combo");
-  const streakEl = document.getElementById("streak");
+            // Initial load: show home or a default game
+            showGame('home');
+        });
 
-  const startBtn = document.getElementById("startBtn");
-  const pauseBtn = document.getElementById("pauseBtn");
-  const resetBtn = document.getElementById("resetBtn");
-  const soundBtn = document.getElementById("soundBtn");
-  const modeBtn  = document.getElementById("modeBtn");
-  const modeBadge= document.getElementById("modeBadge");
 
-  const overlay  = document.getElementById("overlay");
-  const overlayStart = document.getElementById("overlayStart");
-  const overlayHow = document.getElementById("overlayHow");
-  const howText  = document.getElementById("howText");
-  const toast    = document.getElementById("toast");
-  const cornerInfo = document.getElementById("cornerInfo");
-  const tipEl    = document.getElementById("tip");
+        // --- TIC-TAC-TOE GAME LOGIC ---
+        const TicTacToe = (() => {
+            let board;
+            let currentPlayer;
+            let isGameActive;
 
-  // ===== Audio (tiny synth) =====
-  let audioCtx = null;
-  let soundOn = true;
-  function beep(freq=520, dur=0.06, type="sine", gain=0.045){
-    if(!soundOn) return;
-    try{
-      audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
-      const t0 = audioCtx.currentTime;
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type = type;
-      o.frequency.value = freq;
-      g.gain.value = gain;
-      o.connect(g);
-      g.connect(audioCtx.destination);
-      o.start(t0);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-      o.stop(t0 + dur);
-    }catch(e){}
-  }
+            const cells = document.querySelectorAll('.tictactoe-cell');
+            const statusDisplay = document.getElementById('tictactoe-status');
+            const resetButton = document.getElementById('tictactoe-reset');
 
-  // ===== Game State =====
-  const LS_KEY = "one_more_dot_best_v1";
-  let best = Number(localStorage.getItem(LS_KEY) || 0);
+            const winningConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                [0, 4, 8], [2, 4, 6]             // Diagonals
+            ];
 
-  let W=0,H=0, dpr=1;
-  function resize(){
-    const rect = stage.getBoundingClientRect();
-    dpr = Math.max(1, Math.min(2.25, window.devicePixelRatio || 1));
-    W = Math.floor(rect.width);
-    H = Math.floor(rect.height);
-    canvas.width  = Math.floor(W * dpr);
-    canvas.height = Math.floor(H * dpr);
-    canvas.style.width = W + "px";
-    canvas.style.height = H + "px";
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  window.addEventListener("resize", resize, {passive:true});
-  resize();
+            function handleResultValidation() {
+                let roundWon = false;
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const winCondition = winningConditions[i];
+                    let a = board[winCondition[0]];
+                    let b = board[winCondition[1]];
+                    let c = board[winCondition[2]];
+                    if (a === '' || b === '' || c === '') {
+                        continue;
+                    }
+                    if (a === b && b === c) {
+                        roundWon = true;
+                        break;
+                    }
+                }
 
-  const Mode = { CLASSIC:"Classic", ZEN:"Zen" };
-  let mode = Mode.CLASSIC;
+                if (roundWon) {
+                    statusDisplay.innerHTML = `Player ${currentPlayer} has won!`;
+                    isGameActive = false;
+                    return;
+                }
 
-  let running = false;
-  let paused = false;
-  let gameOver = false;
+                if (!board.includes('')) {
+                    statusDisplay.innerHTML = 'It\'s a draw!';
+                    isGameActive = false;
+                    return;
+                }
 
-  let score = 0;
-  let streak = 0;
-  let combo = 1;
-  let lastHitTime = -Infinity;
+                changePlayer();
+            }
 
-  // Dot properties (animated)
-  let dot = {
-    x: W*0.5, y: H*0.5,
-    r: 30,
-    vx: 120, vy: 80,
-    baseSpeed: 160
-  };
+            function changePlayer() {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                statusDisplay.innerHTML = `It's ${currentPlayer}'s turn`;
+            }
 
-  // Particles for satisfying feedback
-  const parts = [];
-  function spawnParticles(x,y, n=18){
-    for(let i=0;i<n;i++){
-      const a = Math.random()*Math.PI*2;
-      const s = 60 + Math.random()*240;
-      parts.push({
-        x,y,
-        vx: Math.cos(a)*s,
-        vy: Math.sin(a)*s,
-        life: 0.55 + Math.random()*0.35,
-        t: 0,
-        r: 2 + Math.random()*2.8
-      });
-    }
-  }
+            function handleCellClick(clickedCellEvent) {
+                const clickedCell = clickedCellEvent.target;
+                const clickedCellIndex = parseInt(clickedCell.dataset.cellIndex);
 
-  function resetRun(keepOverlay=true){
-    running = false;
-    paused = false;
-    gameOver = false;
-    score = 0;
-    streak = 0;
-    combo = 1;
-    lastHitTime = -Infinity;
-    dot.x = W*0.5; dot.y = H*0.5;
-    dot.r = 32;
-    dot.baseSpeed = 165;
-    dot.vx = (Math.random()<.5?-1:1) * (100 + Math.random()*80);
-    dot.vy = (Math.random()<.5?-1:1) * (90 + Math.random()*70);
-    parts.length = 0;
-    updateHUD();
-    cornerInfo.textContent = "Ready";
-    if(keepOverlay) overlay.style.display = "flex";
-    pauseBtn.disabled = true;
-    startBtn.textContent = "Start";
-  }
+                if (board[clickedCellIndex] !== '' || !isGameActive) {
+                    return;
+                }
 
-  function startRun(){
-    if(gameOver) resetRun(false);
-    running = true;
-    paused = false;
-    gameOver = false;
-    overlay.style.display = "none";
-    pauseBtn.disabled = false;
-    startBtn.textContent = "Restart";
-    cornerInfo.textContent = "Go!";
-    beep(620, 0.08, "triangle", 0.05);
-    // Kick off a new movement direction for variety
-    const angle = Math.random()*Math.PI*2;
-    const sp = dot.baseSpeed;
-    dot.vx = Math.cos(angle)*sp;
-    dot.vy = Math.sin(angle)*sp;
-  }
+                board[clickedCellIndex] = currentPlayer;
+                clickedCell.innerHTML = currentPlayer;
+                clickedCell.classList.add(currentPlayer.toLowerCase()); // Add class for styling
+                handleResultValidation();
+            }
 
-  function endRun(reason="Miss!"){
-    if(mode === Mode.ZEN) return; // Zen never ends
-    running = false;
-    paused = false;
-    gameOver = true;
-    cornerInfo.textContent = reason + " (Game Over)";
-    overlay.style.display = "flex";
-    howText.hidden = true;
-    document.getElementById("panel").querySelector("h2").textContent = "Run ended.";
-    document.getElementById("panel").querySelector("p").innerHTML =
-      `You scored <b>${score}</b>. Best is <b>${best}</b>. Tap Start to try again.`;
-    beep(180, 0.12, "sawtooth", 0.06);
-    beep(120, 0.14, "sawtooth", 0.06);
-    pauseBtn.disabled = true;
-  }
+            function resetGame() {
+                board = ['', '', '', '', '', '', '', '', ''];
+                currentPlayer = 'X';
+                isGameActive = true;
+                statusDisplay.innerHTML = `It's ${currentPlayer}'s turn`;
+                cells.forEach(cell => {
+                    cell.innerHTML = '';
+                    cell.classList.remove('x', 'o');
+                });
+            }
 
-  function togglePause(){
-    if(!running) return;
-    paused = !paused;
-    cornerInfo.textContent = paused ? "Paused" : "Go!";
-    toastPop(paused ? "Paused" : "Unpaused", paused ? "bad" : "good");
-    beep(paused ? 260 : 520, 0.06, "square", 0.04);
-  }
+            function init() {
+                cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+                resetButton.addEventListener('click', resetGame);
+                resetGame(); // Initialize game state on load
+            }
 
-  function toastPop(text, kind="good"){
-    toast.textContent = text;
-    toast.classList.add("show");
-    toast.style.borderColor = kind==="good" ? "rgba(56,211,159,.35)" : "rgba(255,77,109,.35)";
-    toast.style.boxShadow = kind==="good" ? "0 10px 40px rgba(56,211,159,.12)" : "0 10px 40px rgba(255,77,109,.10)";
-    clearTimeout(toast._t);
-    toast._t = setTimeout(()=>toast.classList.remove("show"), 650);
-  }
+            return { init };
+        })();
 
-  function updateHUD(){
-    scoreEl.textContent = score;
-    bestEl.textContent = best;
-    comboEl.textContent = "x" + combo;
-    streakEl.textContent = streak;
-    modeBadge.textContent = mode;
-    tipEl.innerHTML = mode===Mode.CLASSIC
-      ? "Hit the dot before it escapes. <b>One miss ends the run</b>. It gets smaller & faster."
-      : "Practice mode. <b>Misses don’t end</b>, but points are lower. Switch back to Classic for highscores.";
-  }
 
-  // ===== Input =====
-  function getPointerPos(ev){
-    const rect = canvas.getBoundingClientRect();
-    const x = (ev.clientX - rect.left);
-    const y = (ev.clientY - rect.top);
-    return {x,y};
-  }
+        // --- TEXT ADVENTURE GAME LOGIC ---
+        const TextAdventure = (() => {
+            const outputDiv = document.getElementById('adventure-output');
+            const choicesDiv = document.getElementById('adventure-choices');
 
-  function tryHit(x,y){
-    if(!running || paused) return;
+            const story = {
+                start: {
+                    text: "You awaken in a damp, cold chamber. A faint light emanates from a crack in the wall. There are two paths: a dark, narrow tunnel to the left, and a wider, slightly glowing passage straight ahead. Which path do you take?",
+                    choices: [
+                        { text: "Take the dark tunnel.", next: "darkTunnel" },
+                        { text: "Go straight into the glowing passage.", next: "glowingPassage" }
+                    ]
+                },
+                darkTunnel: {
+                    text: "The dark tunnel twists and turns, the air growing heavier. You hear a soft scratching sound ahead. Do you...",
+                    choices: [
+                        { text: "Proceed cautiously.", next: "tunnelMonster" },
+                        { text: "Turn back.", next: "start" }
+                    ]
+                },
+                tunnelMonster: {
+                    text: "You come face-to-face with a hideous creature! It lunges! You manage to dodge, but your path is blocked. You must retreat!",
+                    choices: [
+                        { text: "Flee back to the chamber.", next: "start" }
+                    ]
+                },
+                glowingPassage: {
+                    text: "The glowing passage leads to a vast cavern illuminated by bioluminescent fungi. In the center, a pedestal holds a shimmering scroll. As you approach, a voice echoes: 'He who seeks knowledge must choose wisely. To read, or to leave?'",
+                    choices: [
+                        { text: "Read the scroll.", next: "readScroll" },
+                        { text: "Leave the scroll and explore the cavern.", next: "exploreCavern" }
+                    ]
+                },
+                readScroll: {
+                    text: "As you touch the scroll, ancient runes glow brightly, and a surge of energy fills you. You gain incredible insight into the chamber's secrets. Suddenly, you feel a pull, and the world fades to black... You have completed your quest!",
+                    choices: [
+                        { text: "Restart Adventure", next: "start" }
+                    ]
+                },
+                exploreCavern: {
+                    text: "You decide to ignore the scroll and explore the cavern. You find a hidden pool of water, strangely warm. As you drink, you feel refreshed, but no closer to understanding the chamber's purpose.",
+                    choices: [
+                        { text: "Return to the scroll pedestal.", next: "glowingPassage" },
+                        { text: "Try going back to the starting chamber.", next: "start" }
+                    ]
+                }
+            };
 
-    const dx = x - dot.x;
-    const dy = y - dot.y;
-    const hit = (dx*dx + dy*dy) <= (dot.r*dot.r);
+            let currentScene = 'start';
 
-    if(hit){
-      const t = now();
-      const dt = t - lastHitTime;
+            function renderScene() {
+                const scene = story[currentScene];
+                outputDiv.innerHTML = `<p>${scene.text}</p>`;
+                choicesDiv.innerHTML = '';
 
-      // Combo window shrinks as speed increases (but never too small)
-      const comboWindow = clamp(720 - (dot.baseSpeed-160)*1.4, 260, 720);
-      if(dt <= comboWindow) combo = clamp(combo + 1, 1, 12);
-      else combo = 1;
+                scene.choices.forEach(choice => {
+                    const button = document.createElement('button');
+                    button.textContent = choice.text;
+                    button.addEventListener('click', () => {
+                        currentScene = choice.next;
+                        renderScene();
+                    });
+                    choicesDiv.appendChild(button);
+                });
+                outputDiv.scrollTop = outputDiv.scrollHeight; // Scroll to bottom
+            }
 
-      lastHitTime = t;
-      streak++;
+            function init() {
+                currentScene = 'start'; // Reset to start
+                renderScene();
+            }
 
-      // Scoring: Classic rewards combo more; Zen is lower
-      const base = mode===Mode.CLASSIC ? 10 : 6;
-      const gained = Math.round(base * (1 + (combo-1)*0.42));
-      score += gained;
+            return { init };
+        })();
 
-      if(score > best){
-        best = score;
-        localStorage.setItem(LS_KEY, String(best));
-      }
 
-      // Difficulty ramps
-      dot.baseSpeed = clamp(dot.baseSpeed + (mode===Mode.CLASSIC ? 9 : 6), 160, 520);
-      dot.r = clamp(dot.r - (mode===Mode.CLASSIC ? 1.25 : 0.9), 10, 40);
+        // --- GUESS THE NUMBER GAME LOGIC ---
+        const GuessTheNumber = (() => {
+            let secretNumber;
+            let attempts;
+            let isGameOver;
 
-      // Teleport to a new spot (addictive “one more” feel)
-      const margin = dot.r + 14;
-      dot.x = margin + Math.random()*(W - margin*2);
-      dot.y = margin + Math.random()*(H - margin*2);
+            const guessInput = document.getElementById('guess-input');
+            const guessButton = document.getElementById('guess-button');
+            const guessResetButton = document.getElementById('guess-reset');
+            const guessStatus = document.getElementById('guess-status');
+            const guessAttempts = document.getElementById('guess-attempts');
 
-      // Random new direction
-      const a = Math.random()*Math.PI*2;
-      dot.vx = Math.cos(a) * dot.baseSpeed;
-      dot.vy = Math.sin(a) * dot.baseSpeed;
+            function startGame() {
+                secretNumber = Math.floor(Math.random() * 100) + 1;
+                attempts = 0;
+                isGameOver = false;
+                guessInput.value = '';
+                guessInput.focus();
+                guessStatus.textContent = '';
+                guessAttempts.textContent = `Attempts: ${attempts}`;
+                guessButton.disabled = false;
+                guessInput.disabled = false;
+            }
 
-      spawnParticles(dot.x, dot.y, 20);
-      toastPop("+" + gained + "  (x" + combo + ")", "good");
+            function checkGuess() {
+                if (isGameOver) return;
 
-      // Satisfying pitch climb
-      beep(440 + combo*55, 0.05, "triangle", 0.05);
-      updateHUD();
-      cornerInfo.textContent = `Speed ${Math.round(dot.baseSpeed)}`;
+                const guess = parseInt(guessInput.value);
 
-    }else{
-      // Miss penalty
-      if(mode===Mode.ZEN){
-        // Soft penalty: reset combo & tiny score
-        combo = 1;
-        streak = 0;
-        score = Math.max(0, score - 5);
-        toastPop("Miss (-5)", "bad");
-        beep(220, 0.06, "square", 0.035);
-        updateHUD();
-      }else{
-        toastPop("Miss!", "bad");
-        endRun("Miss!");
-      }
-    }
-  }
+                if (isNaN(guess) || guess < 1 || guess > 100) {
+                    guessStatus.textContent = 'Please enter a valid number between 1 and 100.';
+                    return;
+                }
 
-  // Pointer events (mobile + desktop)
-  canvas.addEventListener("pointerdown", (ev)=>{
-    ev.preventDefault();
-    canvas.setPointerCapture?.(ev.pointerId);
-    const p = getPointerPos(ev);
-    tryHit(p.x,p.y);
-  }, {passive:false});
+                attempts++;
+                guessAttempts.textContent = `Attempts: ${attempts}`;
 
-  // Keyboard
-  window.addEventListener("keydown", (e)=>{
-    if(e.key === " "){ e.preventDefault(); togglePause(); }
-    if(e.key.toLowerCase() === "r"){ if(running) { resetRun(false); startRun(); } else startRun(); }
-    if(e.key.toLowerCase() === "m"){ toggleMode(); }
-  });
+                if (guess === secretNumber) {
+                    guessStatus.textContent = `Congratulations! You guessed the number ${secretNumber} in ${attempts} attempts!`;
+                    isGameOver = true;
+                    guessButton.disabled = true;
+                    guessInput.disabled = true;
+                } else if (guess < secretNumber) {
+                    guessStatus.textContent = 'Too low! Try again.';
+                } else {
+                    guessStatus.textContent = 'Too high! Try again.';
+                }
+                guessInput.value = '';
+                guessInput.focus();
+            }
 
-  // Buttons
-  startBtn.addEventListener("click", ()=>{
-    if(!running){ startRun(); }
-    else { resetRun(false); startRun(); }
-  });
-  overlayStart.addEventListener("click", ()=> startRun());
-  pauseBtn.addEventListener("click", togglePause);
-  resetBtn.addEventListener("click", ()=>{
-    localStorage.removeItem(LS_KEY);
-    best = 0;
-    resetRun(true);
-    toastPop("Reset", "bad");
-  });
+            function init() {
+                guessButton.removeEventListener('click', checkGuess); // Prevent multiple listeners
+                guessResetButton.removeEventListener('click', startGame);
 
-  soundBtn.addEventListener("click", ()=>{
-    soundOn = !soundOn;
-    soundBtn.textContent = "Sound: " + (soundOn ? "On" : "Off");
-    soundBtn.classList.toggle("on", soundOn);
-    soundBtn.classList.toggle("off", !soundOn);
-    if(soundOn) beep(520, 0.06, "triangle", 0.05);
-  });
+                guessButton.addEventListener('click', checkGuess);
+                guessInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        checkGuess();
+                    }
+                });
+                guessResetButton.addEventListener('click', startGame);
+                startGame();
+            }
 
-  overlayHow.addEventListener("click", ()=>{
-    howText.hidden = !howText.hidden;
-  });
+            return { init };
+        })();
 
-  function toggleMode(){
-    mode = (mode === Mode.CLASSIC) ? Mode.ZEN : Mode.CLASSIC;
-    modeBtn.textContent = "Mode: " + mode;
-    updateHUD();
-    toastPop("Mode: " + mode, "good");
-    beep(560, 0.05, "triangle", 0.05);
-    resetRun(true);
-    // Update overlay text back to default
-    document.getElementById("panel").querySelector("h2").textContent = "Click the dot. Keep the streak.";
-    document.getElementById("panel").querySelector("p").textContent =
-      "Each hit boosts speed and shrinks the target. Chain hits quickly to build combo. One miss ends the run — try to beat your best.";
-  }
-  modeBtn.addEventListener("click", toggleMode);
 
-  // ===== Main Loop =====
-  let lastT = now();
-  function tick(){
-    const t = now();
-    const dt = Math.min(0.033, (t - lastT) / 1000);
-    lastT = t;
+        // --- ROCK PAPER SCISSORS GAME LOGIC ---
+        const RockPaperScissors = (() => {
+            let playerScore = 0;
+            let computerScore = 0;
 
-    // Background
-    ctx.clearRect(0,0,W,H);
+            const rpsChoices = document.querySelectorAll('.rps-choices button');
+            const rpsResult = document.getElementById('rps-result');
+            const rpsScore = document.getElementById('rps-score');
+            const rpsResetButton = document.getElementById('rps-reset');
 
-    // soft grid
-    ctx.globalAlpha = 0.12;
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1;
-    const grid = 46;
-    ctx.beginPath();
-    for(let x=0; x<=W; x+=grid){ ctx.moveTo(x,0); ctx.lineTo(x,H); }
-    for(let y=0; y<=H; y+=grid){ ctx.moveTo(0,y); ctx.lineTo(W,y); }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+            const choices = ['rock', 'paper', 'scissors'];
 
-    if(running && !paused){
-      // move dot with bounce
-      dot.x += dot.vx * dt;
-      dot.y += dot.vy * dt;
+            function getComputerChoice() {
+                const randomIndex = Math.floor(Math.random() * choices.length);
+                return choices[randomIndex];
+            }
 
-      const m = dot.r + 6;
-      if(dot.x < m){ dot.x = m; dot.vx *= -1; }
-      if(dot.x > W-m){ dot.x = W-m; dot.vx *= -1; }
-      if(dot.y < m){ dot.y = m; dot.vy *= -1; }
-      if(dot.y > H-m){ dot.y = H-m; dot.vy *= -1; }
+            function playRound(playerChoice) {
+                const computerChoice = getComputerChoice();
+                let result = '';
 
-      // tiny drift difficulty: speed creeps
-      dot.baseSpeed = clamp(dot.baseSpeed + (mode===Mode.CLASSIC ? 1.2 : 0.8)*dt, 160, 520);
-      const v = Math.hypot(dot.vx, dot.vy);
-      if(v > 1){
-        const scale = dot.baseSpeed / v;
-        dot.vx *= lerp(1, scale, 0.02);
-        dot.vy *= lerp(1, scale, 0.02);
-      }
-    }
+                if (playerChoice === computerChoice) {
+                    result = `It's a tie! Both chose ${playerChoice}.`;
+                } else if (
+                    (playerChoice === 'rock' && computerChoice === 'scissors') ||
+                    (playerChoice === 'paper' && computerChoice === 'rock') ||
+                    (playerChoice === 'scissors' && computerChoice === 'paper')
+                ) {
+                    playerScore++;
+                    result = `You win! ${playerChoice} beats ${computerChoice}.`;
+                } else {
+                    computerScore++;
+                    result = `You lose! ${computerChoice} beats ${playerChoice}.`;
+                }
+                rpsResult.textContent = result;
+                updateScoreDisplay();
+            }
 
-    // Particles
-    for(let i=parts.length-1;i>=0;i--){
-      const p = parts[i];
-      p.t += dt;
-      const k = p.t / p.life;
-      if(k >= 1){ parts.splice(i,1); continue; }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vx *= 0.94;
-      p.vy *= 0.94;
+            function updateScoreDisplay() {
+                rpsScore.textContent = `Player: ${playerScore} | Computer: ${computerScore}`;
+            }
 
-      ctx.globalAlpha = (1-k) * 0.85;
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r*(1-k), 0, Math.PI*2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
+            function resetScore() {
+                playerScore = 0;
+                computerScore = 0;
+                rpsResult.textContent = '';
+                updateScoreDisplay();
+            }
 
-    // Dot glow
-    const pulse = running ? (0.6 + 0.4*Math.sin(t/120)) : 0.35;
-    const grd = ctx.createRadialGradient(dot.x, dot.y, dot.r*0.2, dot.x, dot.y, dot.r*2.8);
-    grd.addColorStop(0, `rgba(122,167,255,${0.55*pulse})`);
-    grd.addColorStop(0.45, `rgba(56,211,159,${0.22*pulse})`);
-    grd.addColorStop(1, "rgba(255,255,255,0)");
+            function init() {
+                rpsChoices.forEach(button => {
+                    button.removeEventListener('click', handleChoice); // Prevent multiple listeners
+                    button.addEventListener('click', handleChoice);
+                });
+                rpsResetButton.removeEventListener('click', resetScore);
+                rpsResetButton.addEventListener('click', resetScore);
+                updateScoreDisplay(); // Display initial score
+            }
 
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(dot.x, dot.y, dot.r*2.2, 0, Math.PI*2);
-    ctx.fill();
+            function handleChoice(event) {
+                playRound(event.target.id.replace('rps-', ''));
+            }
 
-    // Dot core
-    ctx.fillStyle = "rgba(255,255,255,.92)";
-    ctx.beginPath();
-    ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI*2);
-    ctx.fill();
+            return { init };
+        })();
 
-    // Dot outline
-    ctx.strokeStyle = "rgba(255,255,255,.30)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(dot.x, dot.y, dot.r+1, 0, Math.PI*2);
-    ctx.stroke();
-
-    // Center hint
-    if(!running){
-      ctx.globalAlpha = 0.85;
-      ctx.fillStyle = "rgba(234,240,255,.85)";
-      ctx.font = "600 16px system-ui";
-      ctx.textAlign = "center";
-      ctx.fillText("Tap Start, then click the dot.", W/2, H/2 - 8);
-      ctx.globalAlpha = 0.7;
-      ctx.font = "12px system-ui";
-      ctx.fillText("One miss ends the run (Classic).", W/2, H/2 + 14);
-      ctx.globalAlpha = 1;
-    }else if(paused){
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = "rgba(234,240,255,.85)";
-      ctx.font = "700 22px system-ui";
-      ctx.textAlign = "center";
-      ctx.fillText("Paused", W/2, H/2);
-      ctx.globalAlpha = 1;
-    }
-
-    requestAnimationFrame(tick);
-  }
-
-  // Init
-  bestEl.textContent = best;
-  updateHUD();
-  resetRun(true);
-  requestAnimationFrame(tick);
-})();
-</script>
+    </script>
 </body>
 </html>
